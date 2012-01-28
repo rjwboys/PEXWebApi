@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permissions.webapi.bukkit;
 
 import java.util.logging.Logger;
@@ -12,9 +8,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.webapi.WebServiceManager;
 import ru.tehkode.permissions.webapi.SimpleWebServiceManager;
 import ru.tehkode.permissions.webapi.auth.AuthenticatorFactory;
-import ru.tehkode.permissions.webapi.services.PEXCommonsWebService;
-import ru.tehkode.permissions.webapi.services.PEXGroupWebService;
-import ru.tehkode.permissions.webapi.services.PEXUsersWebService;
+import ru.tehkode.permissions.webapi.services.*;
 
 public class PEXWebApi extends JavaPlugin {
 	
@@ -32,7 +26,8 @@ public class PEXWebApi extends JavaPlugin {
 			return;
 		}
 		
-		if(!this.getConfig().isConfigurationSection("webapi")){
+		if(!this.getConfig().isConfigurationSection("webui")){
+			logger.info("[PEXWebApi] Deploying default configuration");
 			this.saveDefaultConfig();
 			this.reloadConfig();
 		}
