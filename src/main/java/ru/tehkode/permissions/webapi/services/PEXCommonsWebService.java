@@ -30,13 +30,9 @@ public class PEXCommonsWebService extends PEXWebService {
 		String fileName = r.getArg("file");
 		InputStream io = this.getClass().getResourceAsStream("/webui/" + fileName);
 		if (io == null) {
-			System.out.println("File " + fileName + " not found!");
 			throw new ResourceNotFoundException();
-		
 		}
 		
-		System.out.println("test");
-
 		InputStreamReader reader = new InputStreamReader(io);
 
 		ReadableByteChannel inc = Channels.newChannel(io);
@@ -53,7 +49,6 @@ public class PEXCommonsWebService extends PEXWebService {
 		buffer.flip();
 
 		while (buffer.hasRemaining()) {
-			System.out.println("rem");
 			ouc.write(buffer);
 		}
 
@@ -67,6 +62,15 @@ public class PEXCommonsWebService extends PEXWebService {
 
 		obj.put("status", PermissionsEx.isAvailable());
 
+		return obj;
+	}
+	
+	@Path("/call/reload")
+	@Return("application/json")
+	public Object callReload(WebRequest r) {
+		PermissionsEx.getPermissionManager().reset();
+		JSONObject obj = new JSONObject();
+		obj.put("reload", true);
 		return obj;
 	}
 
