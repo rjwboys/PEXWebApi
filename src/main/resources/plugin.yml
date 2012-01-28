@@ -1,0 +1,7 @@
+name: PEXWebApi
+main: ru.tehkode.permissions.webapi.bukkit.PEXWebApi
+depend: [ PermissionsEx ]
+version: 1.18
+authors: [ t3hk0d3 ]
+website: www.webbukkit.org
+description: RESTful Web API plugin for PermissionsEx
