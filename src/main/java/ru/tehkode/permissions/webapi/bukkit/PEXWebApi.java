@@ -26,7 +26,7 @@ public class PEXWebApi extends JavaPlugin {
 			return;
 		}
 		
-		if(!this.getConfig().isConfigurationSection("webui")){
+		if(!this.getConfig().isConfigurationSection("webapi")){
 			logger.info("[PEXWebApi] Deploying default configuration");
 			this.saveDefaultConfig();
 			this.reloadConfig();
