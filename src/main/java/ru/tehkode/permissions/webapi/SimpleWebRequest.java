@@ -1,7 +1,10 @@
 package ru.tehkode.permissions.webapi;
 
 import com.sun.net.httpserver.HttpExchange;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -54,7 +57,7 @@ public class SimpleWebRequest implements WebRequest {
 		if (relativePath != null) {
 			return this.relativePath;
 		}
-		
+
 		String path = this.connection.getRequestURI().getPath();
 
 		if (basePath != null && !basePath.isEmpty() && !basePath.equals("/")) {
@@ -77,6 +80,11 @@ public class SimpleWebRequest implements WebRequest {
 	@Override
 	public Map<String, List<String>> getResponseHeaders() {
 		return this.getResponseHeaders();
+	}
+
+	@Override
+	public void setResponseHeader(String header, String value) {
+		this.connection.getResponseHeaders().set(header, value);
 	}
 
 	@Override
@@ -103,19 +111,18 @@ public class SimpleWebRequest implements WebRequest {
 	}
 
 	@Override
-	public void writeResponse(ByteBuffer buffer) {
-		try {
-			WritableByteChannel channel = Channels.newChannel(this.connection.getResponseBody());
+	public void writeResponse(ByteBuffer buffer) throws IOException {
 
-			if (!this.headersSent) {
-				this.connection.sendResponseHeaders(this.responseCode, 0);
-				this.headersSent = true;
-			}
+		WritableByteChannel channel = Channels.newChannel(this.connection.getResponseBody());
 
-			channel.write(buffer);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		if (!this.headersSent) {
+			this.connection.sendResponseHeaders(this.responseCode, buffer.limit());
+			this.headersSent = true;
 		}
+
+		channel.write(buffer);
+		
+		channel.close();
 	}
 
 	protected ByteBuffer readRequestData() throws IOException {

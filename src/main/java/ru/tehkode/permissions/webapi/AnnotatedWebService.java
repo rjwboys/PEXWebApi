@@ -4,6 +4,9 @@
  */
 package ru.tehkode.permissions.webapi;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +15,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import ru.tehkode.permissions.webapi.annotations.Path;
+import ru.tehkode.permissions.webapi.annotations.Return;
 import ru.tehkode.permissions.webapi.exceptions.ServiceNotFoundException;
+import ru.tehkode.permissions.webapi.exceptions.WebApiException;
+import ru.tehkode.permissions.webapi.representers.ResultRepresenter;
 
 public abstract class AnnotatedWebService implements WebService {
 
@@ -34,21 +40,21 @@ public abstract class AnnotatedWebService implements WebService {
 	}
 
 	@Override
-	public void handle(WebRequest request) {
+	public void handle(WebRequest request) throws IOException {
 		Map<String, String> args = null;
-		
+
 		for (MethodExecutor executor : this.methods) {
-			args = executor.isMatching(request.getRelativePath());
-			
-			if(args == null){
+			args = executor.matching(request.getRelativePath());
+
+			if (args == null) {
 				continue;
 			}
-			
+
 			request.setArgs(args);
-			
-			System.out.println("CALLING " + args);
+
+			executor.execute(this, request);
 		}
-		
+
 		if (args == null) {
 			throw new ServiceNotFoundException(request.getRequestURL().getPath());
 		}
@@ -66,7 +72,7 @@ public abstract class AnnotatedWebService implements WebService {
 			this.matchRegexp = this.prepare();
 		}
 
-		public Map<String, String> isMatching(String uri) {			
+		public Map<String, String> matching(String uri) {
 			Matcher matcher = this.matchRegexp.matcher(uri);
 			if (!matcher.find()) {
 				return null;
@@ -107,6 +113,26 @@ public abstract class AnnotatedWebService implements WebService {
 			}
 
 			return Pattern.compile(regexp);
+		}
+
+		public void execute(WebService service, WebRequest r) throws IOException {
+			String mimeType = "text/plain";
+
+			if (method.isAnnotationPresent(Return.class)) {
+				mimeType = method.getAnnotation(Return.class).value();
+			}
+
+			try {
+				r.setResponseHeader("Content-Type", mimeType);
+				
+				r.writeResponse(ResultRepresenter.represent(mimeType, this.method.invoke(service, r)));
+			} catch (IOException e) {
+				throw e;
+			} catch (InvocationTargetException e) {
+				throw new WebApiException(e.getCause());
+			} catch (Throwable e) {
+				throw new WebApiException(e);
+			}
 		}
 	}
 }

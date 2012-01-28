@@ -78,12 +78,6 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 			basePath = basePath.substring(0, basePath.length() - 1);
 		}
 
-		for (String path : this.services.keySet()) {
-			if (path.startsWith(basePath) || basePath.startsWith(path)) {
-				throw new IllegalStateException("Intersecting web-service! (" + path + ")");
-			}
-		}
-
 		services.put(basePath, service);
 	}
 
@@ -109,7 +103,7 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 				ex.sendResponseHeaders(request.getHttpCode(), 0);
 			}
 		} catch (IOException e) {
-			throw e; // throw IOException futher
+			throw e; // forward IOException
 		} catch (WebApiException e) {
 			this.handleError(e, ex);
 		} catch (Throwable e) { // handle other exceptions
@@ -122,6 +116,7 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 	}
 
 	protected void handleError(WebApiException e, HttpExchange ex) throws IOException {
+		ex.getResponseHeaders().set("Content-Type", "text/html");
 		ex.sendResponseHeaders(e.getStatusCode(), 0);
 		PrintWriter writer = new PrintWriter(ex.getResponseBody());
 		writer.print("<html>"

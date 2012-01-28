@@ -5,14 +5,24 @@
 
 package ru.tehkode.permissions.webapi.services;
 
+import java.util.Map;
+import org.json.simple.JSONObject;
+import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.webapi.AnnotatedWebService;
+import ru.tehkode.permissions.webapi.WebRequest;
 import ru.tehkode.permissions.webapi.annotations.Path;
+import ru.tehkode.permissions.webapi.annotations.Return;
 
 
 public class PEXCommonsWebService extends AnnotatedWebService {
 
-	@Path("/user/{user}/permissions/{world=}/{tier=shit}")
-	public String getPermissions() {
-		return "PEX RUNNING LOUD AND CLEAR";
+	@Path("/status")
+	@Return("application/json")
+	public Map<String, String> getStatus(WebRequest r) {
+		JSONObject obj = new JSONObject();
+		
+		obj.put("status", PermissionsEx.isAvailable());
+		
+		return obj;
 	}
 }

@@ -10,6 +10,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.webapi.WebServiceManager;
 import ru.tehkode.permissions.webapi.SimpleWebServiceManager;
 import ru.tehkode.permissions.webapi.services.PEXCommonsWebService;
+import ru.tehkode.permissions.webapi.services.PEXUsersWebService;
 
 public class PEXWebApi extends JavaPlugin {
 
@@ -38,6 +39,7 @@ public class PEXWebApi extends JavaPlugin {
 		}
 		
 		service.registerService("/pex", new PEXCommonsWebService());
+		service.registerService("/pex/user", new PEXUsersWebService());
 
 		logger.info("[PEXWebApi] Successfully started! Listeing on http://localhost:9000/");
 	}

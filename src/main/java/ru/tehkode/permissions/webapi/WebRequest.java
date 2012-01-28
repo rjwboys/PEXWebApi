@@ -4,6 +4,7 @@
  */
 package ru.tehkode.permissions.webapi;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -25,6 +26,8 @@ public interface WebRequest {
 	public Map<String, List<String>> getRequestHeaders();
 
 	public Map<String, List<String>> getResponseHeaders();
+	
+	public void setResponseHeader(String header, String value);
 
 	public InetSocketAddress getRemoteAddress();
 
@@ -36,7 +39,7 @@ public interface WebRequest {
 
 	public ByteBuffer getRequest();
 
-	public void writeResponse(ByteBuffer buffer);
+	public void writeResponse(ByteBuffer buffer) throws IOException;
 
 	public void setArgs(Map<String, String> args);
 
