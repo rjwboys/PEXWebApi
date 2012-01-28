@@ -5,6 +5,7 @@
 package ru.tehkode.permissions.webapi;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import ru.tehkode.permissions.webapi.annotations.Path;
 import ru.tehkode.permissions.webapi.annotations.Return;
-import ru.tehkode.permissions.webapi.exceptions.ServiceNotFoundException;
+import ru.tehkode.permissions.webapi.exceptions.ResourceNotFoundException;
 import ru.tehkode.permissions.webapi.exceptions.WebApiException;
 import ru.tehkode.permissions.webapi.representers.ResultRepresenter;
 
@@ -41,6 +42,12 @@ public abstract class AnnotatedWebService implements WebService {
 
 	@Override
 	public void handle(WebRequest request) throws IOException {
+		if (request.getRelativePath().equals("@list")) {
+			this.listMethods(request);
+			return;
+		}
+
+
 		Map<String, String> args = null;
 
 		for (MethodExecutor executor : this.methods) {
@@ -56,8 +63,22 @@ public abstract class AnnotatedWebService implements WebService {
 		}
 
 		if (args == null) {
-			throw new ServiceNotFoundException(request.getRequestURL().getPath());
+			throw new ResourceNotFoundException(request.getRequestURL().getPath());
 		}
+	}
+
+	protected void listMethods(WebRequest request) throws IOException {
+		Writer writer = new OutputStreamWriter(request.getOutputStream());
+
+		writer.write("<div><h4>Available methods (" + request.getBasePath() + "):</h4><ul>");
+		for (MethodExecutor executor : this.methods) {
+			writer.write("<li>");
+			writer.write(executor.getPath());
+			writer.write("</li>");
+		}
+		writer.append("</ul></div>");
+		
+		writer.close();
 	}
 
 	protected class MethodExecutor {
@@ -81,14 +102,24 @@ public abstract class AnnotatedWebService implements WebService {
 			Map<String, String> argsMap = new HashMap<String, String>();
 
 			for (int i = 0; i < this.argumentOrder.size(); i++) {
-				argsMap.put(argumentOrder.get(i), matcher.group(i + 1));
+				String argument = argumentOrder.get(i);
+				String value = matcher.group(i + 1);
+				argsMap.put(argument, value != null ? value : this.arguments.get(argument) );
 			}
 
 			return argsMap;
 		}
 
+		public Method getMethod() {
+			return method;
+		}
+
+		public String getPath() {
+			return this.getMethod().getAnnotation(Path.class).value();
+		}
+
 		private Pattern prepare() {
-			String regexp = method.getAnnotation(Path.class).value();
+			String regexp = this.getPath();
 			Matcher matcher = argumentExtractor.matcher(regexp); // it won't be null, god tell me so
 
 			int i = 0;
@@ -123,9 +154,12 @@ public abstract class AnnotatedWebService implements WebService {
 			}
 
 			try {
-				r.setResponseHeader("Content-Type", mimeType);
-				
-				r.writeResponse(ResultRepresenter.represent(mimeType, this.method.invoke(service, r)));
+				Object result = this.method.invoke(service, r);
+
+				if (result != null) {
+					r.setResponseHeader("Content-Type", mimeType);
+					r.writeResponse(ResultRepresenter.represent(mimeType, result));
+				}
 			} catch (IOException e) {
 				throw e;
 			} catch (InvocationTargetException e) {

@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import javax.management.RuntimeErrorException;
-import ru.tehkode.permissions.webapi.exceptions.ServiceNotFoundException;
+import ru.tehkode.permissions.webapi.exceptions.ResourceNotFoundException;
 import ru.tehkode.permissions.webapi.exceptions.WebApiException;
 
 public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
@@ -91,12 +91,12 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 		try {
 			String basePath = this.lookupURI(ex.getRequestURI());
 			if (basePath == null) { // service not found
-				throw new ServiceNotFoundException(ex.getRequestURI().toString());
+				throw new ResourceNotFoundException(ex.getRequestURI().toString());
 			}
 			
 			WebService service = this.getService(basePath);
 			SimpleWebRequest request = new SimpleWebRequest(ex, basePath);
-
+			
 			service.handle(request);
 
 			if (!request.isHeadersSent()) {
@@ -122,7 +122,7 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 		writer.print("<html>"
 				+ "<head><title>" + e.getStatusCode() + " " + e.getMessage() + "</title></head>"
 				+ "<body><h1>" + e.getStatusCode() + " " + e.getMessage() + "</h1><hr/>");
-		if (e instanceof ServiceNotFoundException) {
+		if (e instanceof ResourceNotFoundException) {
 			writer.print("<strong>Sorry, but specified page is not found. Check URL for typos.</strong>");
 		} else {
 			writer.print("<strong>Error occured during processing request:</strong>"

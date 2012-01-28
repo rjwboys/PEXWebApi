@@ -4,15 +4,15 @@
  */
 package ru.tehkode.permissions.webapi.exceptions;
 
-public class ServiceNotFoundException extends WebApiException {
+public class ResourceNotFoundException extends WebApiException {
 
 	protected String path;
 
-	public ServiceNotFoundException() {
+	public ResourceNotFoundException() {
 		super(404, "Not Found");
 	}
 
-	public ServiceNotFoundException(String path) {
+	public ResourceNotFoundException(String path) {
 		this();
 
 		this.path = path;

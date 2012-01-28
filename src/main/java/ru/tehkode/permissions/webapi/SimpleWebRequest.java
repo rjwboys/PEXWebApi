@@ -1,10 +1,7 @@
 package ru.tehkode.permissions.webapi;
 
 import com.sun.net.httpserver.HttpExchange;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -110,18 +107,34 @@ public class SimpleWebRequest implements WebRequest {
 		return this.headersSent;
 	}
 
+	public void sendHeaders() throws IOException {
+		if (!this.headersSent) {
+			this.connection.sendResponseHeaders(this.responseCode, 0);
+			this.headersSent = true;
+		}
+	}
+
+	@Override
+	public InputStream getInputStream() throws IOException {
+		return this.connection.getRequestBody();
+	}
+
+	@Override
+	public OutputStream getOutputStream() throws IOException {
+		this.sendHeaders();
+
+		return this.connection.getResponseBody();
+	}
+
 	@Override
 	public void writeResponse(ByteBuffer buffer) throws IOException {
 
 		WritableByteChannel channel = Channels.newChannel(this.connection.getResponseBody());
 
-		if (!this.headersSent) {
-			this.connection.sendResponseHeaders(this.responseCode, buffer.limit());
-			this.headersSent = true;
-		}
+		this.sendHeaders();
 
 		channel.write(buffer);
-		
+
 		channel.close();
 	}
 

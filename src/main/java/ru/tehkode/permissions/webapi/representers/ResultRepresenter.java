@@ -10,6 +10,7 @@ public abstract class ResultRepresenter {
 
 	static {
 		representers.put("text/plain", new TextRepresenter());
+		representers.put("text/html", new TextRepresenter());
 		representers.put("application/json", new JsonRepresenter());
 	}
 
