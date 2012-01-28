@@ -5,6 +5,8 @@
 package ru.tehkode.permissions.webapi.bukkit;
 
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 import ru.tehkode.permissions.webapi.WebServiceManager;
@@ -37,6 +39,8 @@ public class PEXWebApi extends JavaPlugin {
 			this.getPluginLoader().disablePlugin(this);
 			return;
 		}
+		
+		Bukkit.getServicesManager().register(WebServiceManager.class, this.service, this, ServicePriority.Normal);
 		
 		service.registerService("/pex", new PEXCommonsWebService());
 		service.registerService("/pex/user", new PEXUsersWebService());
