@@ -1,0 +1,4 @@
+webapi:
+    port: 9000
+    auth:
+      type: token

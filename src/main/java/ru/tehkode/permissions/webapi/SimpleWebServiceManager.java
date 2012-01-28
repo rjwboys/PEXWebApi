@@ -7,9 +7,7 @@ package ru.tehkode.permissions.webapi;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -17,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-import javax.management.RuntimeErrorException;
+import ru.tehkode.permissions.webapi.auth.WebAutheniticator;
 import ru.tehkode.permissions.webapi.exceptions.ResourceNotFoundException;
 import ru.tehkode.permissions.webapi.exceptions.WebApiException;
 
@@ -27,25 +25,22 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 	protected HttpServer server;
 	protected Map<String, WebService> services = new HashMap<String, WebService>();
 	protected boolean running = false;
+	protected int port;
 
-	public SimpleWebServiceManager(int port) {
-		try {
-			server = HttpServer.create(new InetSocketAddress(port), 0);
-			server.setExecutor(Executors.newCachedThreadPool());
+	public SimpleWebServiceManager(int port, WebAutheniticator auth) throws IOException {
+		this.port = port;
 
-			server.createContext("/", this);
-		} catch (Throwable e) {
-			throw new IllegalStateException(e);
-		}
-
-		logger.info("[WebApi] WebServer init!");
+		server = HttpServer.create();
+		server.setExecutor(Executors.newCachedThreadPool());
+		server.createContext("/", this);
 	}
 
 	@Override
-	public void start() {
-		logger.info("[WebApi] WebServer started!");
+	public void start() throws IOException {
+		server.bind(new InetSocketAddress(this.port), 0);
 		server.start();
 		this.running = true;
+		logger.info("[PEXWebApi] HTTP Server started on " + this.port + " port!");
 	}
 
 	@Override
@@ -93,10 +88,10 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 			if (basePath == null) { // service not found
 				throw new ResourceNotFoundException(ex.getRequestURI().toString());
 			}
-			
+
 			WebService service = this.getService(basePath);
 			SimpleWebRequest request = new SimpleWebRequest(ex, basePath);
-			
+
 			service.handle(request);
 
 			if (!request.isHeadersSent()) {
@@ -113,6 +108,11 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 				ex.close();
 			}
 		}
+	}
+
+	@Override
+	public WebAutheniticator getAutheniticator() {
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	protected void handleError(WebApiException e, HttpExchange ex) throws IOException {

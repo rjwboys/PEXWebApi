@@ -1,6 +1,5 @@
 package ru.tehkode.permissions.webapi;
 
-import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -10,6 +9,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
+import com.sun.net.httpserver.HttpExchange;
+import java.util.HashMap;
 
 public class SimpleWebRequest implements WebRequest {
 
@@ -17,13 +18,15 @@ public class SimpleWebRequest implements WebRequest {
 	protected ByteBuffer readBuffer = null;
 	protected int responseCode = 200;
 	protected boolean headersSent = false;
-	protected Map<String, String> args = null;
+	protected Map<String, String> args = new HashMap<String, String>();
 	protected String basePath;
 	protected String relativePath = null;
 
 	public SimpleWebRequest(HttpExchange exchange, String basePath) {
 		this.connection = exchange;
 		this.basePath = basePath;
+
+		this.fillArguments(exchange.getRequestURI());
 	}
 
 	@Override
@@ -138,6 +141,38 @@ public class SimpleWebRequest implements WebRequest {
 		channel.close();
 	}
 
+	@Override
+	public String getArg(String arg) {
+		return this.args.get(arg);
+	}
+
+	@Override
+	public Map<String, String> getArgs() {
+		return this.args;
+	}
+
+	@Override
+	public boolean isArgSet(String arg) {
+		return this.args.containsKey(arg) && this.args.get(arg) != null;
+	}
+
+	protected void setArgs(Map<String, String> args) {
+		this.args.putAll(args);
+	}
+
+	protected void fillArguments(URI request) {
+		String[] params = request.getQuery().split("&");
+
+		for (String param : params) {
+			if (param.contains("=")) { // ?name=value
+				String nameAndValue[] = param.split("=");
+				args.put(nameAndValue[0], nameAndValue[1]);
+			} else { //?justname
+				args.put(param, null);
+			}
+		}
+	}
+
 	protected ByteBuffer readRequestData() throws IOException {
 		ReadableByteChannel channel = Channels.newChannel(this.connection.getRequestBody());
 
@@ -159,25 +194,5 @@ public class SimpleWebRequest implements WebRequest {
 		buffer.flip();
 
 		return buffer;
-	}
-
-	@Override
-	public String getArg(String arg) {
-		return this.args.get(arg);
-	}
-
-	@Override
-	public Map<String, String> getArgs() {
-		return this.args;
-	}
-
-	@Override
-	public void setArgs(Map<String, String> args) {
-		this.args = args;
-	}
-
-	@Override
-	public boolean isArgSet(String arg) {
-		return this.args.containsKey(arg) && this.args.get(arg) != null;
 	}
 }

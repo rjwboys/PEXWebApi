@@ -5,6 +5,7 @@
 package ru.tehkode.permissions.webapi;
 
 import java.io.IOException;
+import ru.tehkode.permissions.webapi.auth.WebAutheniticator;
 
 /**
  *
@@ -13,4 +14,5 @@ import java.io.IOException;
 public interface WebService {
 
 	public void handle(WebRequest request) throws IOException;
+	
 }

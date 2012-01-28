@@ -47,8 +47,6 @@ public interface WebRequest {
 
 	public void writeResponse(ByteBuffer buffer) throws IOException;
 
-	public void setArgs(Map<String, String> args);
-
 	public Map<String, String> getArgs();
 
 	public String getArg(String arg);

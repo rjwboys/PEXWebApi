@@ -53,12 +53,12 @@ public abstract class AnnotatedWebService implements WebService {
 		for (MethodExecutor executor : this.methods) {
 			args = executor.matching(request.getRelativePath());
 
-			if (args == null) {
+			if (args == null) { // not matching
 				continue;
 			}
-
-			request.setArgs(args);
-
+			
+			request.getArgs().putAll(args);
+			
 			executor.execute(this, request);
 		}
 
