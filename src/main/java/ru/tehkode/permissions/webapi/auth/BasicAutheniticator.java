@@ -1,11 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ru.tehkode.permissions.webapi.auth;
 
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.webapi.WebRequest;
+import ru.tehkode.permissions.webapi.WebService;
 
 public class BasicAutheniticator implements WebAutheniticator {
 
@@ -16,7 +13,7 @@ public class BasicAutheniticator implements WebAutheniticator {
 	}
 
 	@Override
-	public boolean autheniticate(WebRequest request) {
+	public boolean autheniticate(WebService service, WebRequest request) {
 		return true;
 	}
 }
