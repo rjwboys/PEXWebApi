@@ -11,11 +11,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.rmi.AccessException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 import ru.tehkode.permissions.webapi.auth.WebAutheniticator;
+import ru.tehkode.permissions.webapi.exceptions.AccessDeniedException;
 import ru.tehkode.permissions.webapi.exceptions.ResourceNotFoundException;
 import ru.tehkode.permissions.webapi.exceptions.WebApiException;
 
@@ -26,9 +28,11 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 	protected Map<String, WebService> services = new HashMap<String, WebService>();
 	protected boolean running = false;
 	protected int port;
+	protected WebAutheniticator auth;
 
 	public SimpleWebServiceManager(int port, WebAutheniticator auth) throws IOException {
 		this.port = port;
+		this.auth = auth;
 
 		server = HttpServer.create();
 		server.setExecutor(Executors.newCachedThreadPool());
@@ -92,6 +96,10 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 			WebService service = this.getService(basePath);
 			SimpleWebRequest request = new SimpleWebRequest(ex, basePath);
 
+			if (!this.auth.autheniticate(service, request)) {
+				throw new AccessDeniedException();
+			}
+
 			service.handle(request);
 
 			if (!request.isHeadersSent()) {
@@ -123,8 +131,8 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 				+ "<head><title>" + e.getStatusCode() + " " + e.getMessage() + "</title></head>"
 				+ "<body><h1>" + e.getStatusCode() + " " + e.getMessage() + "</h1><hr/>");
 		if (e instanceof ResourceNotFoundException) {
-			writer.print("<strong>Sorry, but specified page is not found. Check URL for typos.</strong>");
-		} else {
+			writer.print("<strong>Sorry, but specified page is not found. Check URL for typos.</strong><hr/>");
+		} else if (e.isShowTrace()) {
 			writer.print("<strong>Error occured during processing request:</strong>"
 					+ "<div><pre style=\"background: #cfcfcf;margin: 0.5em;padding: 1.5em;\">");
 			if (e.getCause() != null && e.getCause() != e) {
@@ -132,10 +140,10 @@ public class SimpleWebServiceManager implements WebServiceManager, HttpHandler {
 			} else {
 				e.printStackTrace(writer);
 			}
-			writer.print("</pre></div>");
+			writer.print("</pre></div><hr/>");
 		}
 
-		writer.print("<hr/><span style=\"font-size: 8pt;color: #ccc;\">PEXWebApi 1.18</span></body></html>"); // @todo aquire plugin information programmatically
+		writer.print("<span style=\"font-size: 8pt;color: #ccc;\">PEXWebApi 1.18</span></body></html>"); // @todo aquire plugin information programmatically
 		writer.close();
 	}
 
