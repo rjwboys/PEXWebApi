@@ -6,10 +6,11 @@ import java.util.logging.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import ru.tehkode.permissions.webapi.WebRequest;
 import ru.tehkode.permissions.webapi.WebService;
+import sun.misc.BASE64Encoder;
 
 public class TokenAuthenicator extends BasicAutheniticator {
+
 	private final static Logger logger = Logger.getLogger("Minecraft");
-	
 	protected String token = null;
 
 	public TokenAuthenicator(ConfigurationSection config) {
@@ -24,10 +25,10 @@ public class TokenAuthenicator extends BasicAutheniticator {
 
 	private String generateToken() {
 		try {
-			MessageDigest sha = MessageDigest.getInstance("SHA1");
-			String newToken = new String(sha.digest(Double.toString(System.nanoTime() * Math.random()).getBytes()));
+			MessageDigest sha = MessageDigest.getInstance("SHA1");			
+			String newToken = (new BASE64Encoder()).encode(sha.digest(Double.toString(System.nanoTime() * Math.random()).getBytes())).substring(0, 16);
 
-			logger.info("[PEXWebApi] Generated new authenitcation token. Token is written to \"/plugins/PEXWebApi/config.yml\"!");
+			logger.info("[PEXWebApi] Generated new authenitcation token. New token is \"" + newToken + "\"!");
 
 			return newToken;
 		} catch (NoSuchAlgorithmException e) {
