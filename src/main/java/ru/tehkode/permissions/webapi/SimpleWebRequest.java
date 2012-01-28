@@ -161,7 +161,13 @@ public class SimpleWebRequest implements WebRequest {
 	}
 
 	protected void fillArguments(URI request) {
-		String[] params = request.getQuery().split("&");
+		String query = request.getQuery();
+		
+		if (query == null) {
+			return;
+		}
+		
+		String[] params = query.split("&");
 
 		for (String param : params) {
 			if (param.contains("=")) { // ?name=value
