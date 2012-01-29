@@ -48,7 +48,7 @@ public abstract class AnnotatedWebService implements WebService {
 		}
 
 
-		Map<String, String> args = null;
+		Map<String, List<String>> args = null;
 
 		for (MethodExecutor executor : this.methods) {
 			args = executor.matching(request.getRelativePath());
@@ -56,9 +56,9 @@ public abstract class AnnotatedWebService implements WebService {
 			if (args == null) { // not matching
 				continue;
 			}
-			
+
 			request.getArgs().putAll(args);
-			
+
 			executor.execute(this, request);
 		}
 
@@ -77,7 +77,7 @@ public abstract class AnnotatedWebService implements WebService {
 			writer.write("</li>");
 		}
 		writer.append("</ul></div>");
-		
+
 		writer.close();
 	}
 
@@ -93,18 +93,23 @@ public abstract class AnnotatedWebService implements WebService {
 			this.matchRegexp = this.prepare();
 		}
 
-		public Map<String, String> matching(String uri) {
+		public Map<String, List<String>> matching(String uri) {
 			Matcher matcher = this.matchRegexp.matcher(uri);
 			if (!matcher.find()) {
 				return null;
 			}
 
-			Map<String, String> argsMap = new HashMap<String, String>();
+			Map<String, List<String>> argsMap = new HashMap<String, List<String>>();
 
 			for (int i = 0; i < this.argumentOrder.size(); i++) {
 				String argument = argumentOrder.get(i);
 				String value = matcher.group(i + 1);
-				argsMap.put(argument, value != null ? value : this.arguments.get(argument) );
+
+				if (!argsMap.containsKey(argument)) {
+					argsMap.put(argument, new ArrayList<String>());
+				}
+
+				argsMap.get(argument).add(value != null ? value : this.arguments.get(argument));
 			}
 
 			return argsMap;

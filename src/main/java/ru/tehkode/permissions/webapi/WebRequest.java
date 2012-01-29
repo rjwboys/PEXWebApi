@@ -47,9 +47,11 @@ public interface WebRequest {
 
 	public void writeResponse(ByteBuffer buffer) throws IOException;
 
-	public Map<String, String> getArgs();
+	public Map<String, List<String>> getArgs();
 
 	public String getArg(String arg);
+	
+	public List<String> getArgList(String arg);
 
 	public boolean isArgSet(String arg);
 }

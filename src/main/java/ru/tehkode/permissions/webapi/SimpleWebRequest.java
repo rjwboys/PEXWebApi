@@ -10,6 +10,8 @@ import java.nio.channels.WritableByteChannel;
 import java.util.List;
 import java.util.Map;
 import com.sun.net.httpserver.HttpExchange;
+import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SimpleWebRequest implements WebRequest {
@@ -18,7 +20,7 @@ public class SimpleWebRequest implements WebRequest {
 	protected ByteBuffer readBuffer = null;
 	protected int responseCode = 200;
 	protected boolean headersSent = false;
-	protected Map<String, String> args = new HashMap<String, String>();
+	protected Map<String, List<String>> args = new HashMap<String, List<String>>();
 	protected String basePath;
 	protected String relativePath = null;
 
@@ -26,7 +28,12 @@ public class SimpleWebRequest implements WebRequest {
 		this.connection = exchange;
 		this.basePath = basePath;
 
-		this.fillArguments(exchange.getRequestURI());
+		this.fillArguments(exchange.getRequestURI().getQuery());
+
+		if (this.getRequestMethod() == HttpMethod.POST) {
+			ByteBuffer request = this.getRequest();
+			this.fillArguments(new String(request.array(), 0, request.position()));
+		}
 	}
 
 	@Override
@@ -143,11 +150,16 @@ public class SimpleWebRequest implements WebRequest {
 
 	@Override
 	public String getArg(String arg) {
+		return this.args.get(arg).get(0);
+	}
+
+	@Override
+	public List<String> getArgList(String arg) {
 		return this.args.get(arg);
 	}
 
 	@Override
-	public Map<String, String> getArgs() {
+	public Map<String, List<String>> getArgs() {
 		return this.args;
 	}
 
@@ -156,25 +168,39 @@ public class SimpleWebRequest implements WebRequest {
 		return this.args.containsKey(arg) && this.args.get(arg) != null;
 	}
 
-	protected void setArgs(Map<String, String> args) {
-		this.args.putAll(args);
+	protected void addArg(String key, String value) {
+		if (!this.args.containsKey(key)) {
+			this.args.put(key, new ArrayList<String>());
+		}
+
+		if (value != null) {
+			this.args.get(key).add(value);
+		}
 	}
 
-	protected void fillArguments(URI request) {
-		String query = request.getQuery();
-		
+	protected void setArgs(Map<String, String> args) {
+		for (String key : args.keySet()) {
+			this.addArg(key, args.get(key));
+		}
+	}
+
+	protected void fillArguments(String query) {
 		if (query == null) {
 			return;
 		}
-		
+
 		String[] params = query.split("&");
 
 		for (String param : params) {
-			if (param.contains("=")) { // ?name=value
-				String nameAndValue[] = param.split("=");
-				args.put(nameAndValue[0], nameAndValue[1]);
-			} else { //?justname
-				args.put(param, null);
+			try {
+				if (param.contains("=")) { // ?name=value
+					String nameAndValue[] = param.split("=");
+
+					this.addArg(URLDecoder.decode(nameAndValue[0], "UTF-8"), URLDecoder.decode(nameAndValue[1], "UTF-8"));
+				} else { // ?just&name&without&value
+					this.addArg(URLDecoder.decode(param, "UTF-8"), null);
+				}
+			} catch (UnsupportedEncodingException e) {
 			}
 		}
 	}
@@ -196,9 +222,6 @@ public class SimpleWebRequest implements WebRequest {
 				buffer = newBuffer;
 			}
 		}
-
-		buffer.flip();
-
 		return buffer;
 	}
 }
